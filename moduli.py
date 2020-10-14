@@ -17,27 +17,22 @@ import os
 import argparse
 from itertools import product
 from multiprocessing import get_context
+import lmfit as lm
+import maplotlib.pyplot as plt
 
-def file_reader(file, bead, wrap = False):
+def file_reader(file, atoms, wrap = False):
     pipeline = ov.io.import_file(file)
 
     if wrap == True:
         pipeline.modifiers.append(ov.modifiers.WrapPeriodicImagesModifier())
     
-    pipeline.modifiers.append(ov.modifiers.SelectTypeModifier(property = 'Particle Type', types = set(bead)))    
+    pipeline.modifiers.append(ov.modifiers.SelectTypeModifier(property = 'Particle Type', types = set(atoms)))    
     
     data = pipeline.compute()
     
     a = np.where(data.particles.selection[:]==1)[0]
 
     pos = np.array(data.particles.positions[:][a])
-
-    # b = list(bead)
-    # c = ''.join(b)
-
-    # fname = file.split('.pdb')[0]+'_'+c+'_coords.p'
-
-    # pickle.dump(pos, open(fname, 'wb'))
     
     return pos
 
@@ -52,7 +47,10 @@ def PCA(data):
     #centering the data
     data -= np.mean(data, axis = 0)  
     
+    #calculate the covariance
     cov = np.cov(data, rowvar = False)
+
+    #find eigenvalues and eigenvectors of the covariance for the principal components
     try:
         evals , evecs = linalg.eigh(cov)
         
@@ -76,14 +74,11 @@ def get_surrounding_coords(tree, coords, index, cut_off_radius):
     
     return surrounding_coords
 
-def coord_handling(file, beads, cut_off_radius):
-        
+def coord_handling(file, atoms, cut_off_radius):
     
-    head_bead = np.array(beads[0])
-    neutral_bead = np.array(beads[1])
-    tail_bead = np.array(beads[2])    
-    
-    # print('here', file, beads[0], type(beads[0]),len(beads[0]), head_bead, type(head_bead), head_bead.shape)
+    head_bead = np.array(atoms[0])
+    neutral_bead = np.array(atoms[1])
+    tail_bead = np.array(atoms[2])    
     
     #headgroup positions
     HG_pos = file_reader(file, head_bead)
@@ -181,7 +176,7 @@ def coord_handling(file, beads, cut_off_radius):
 
     return df
 
-def moduli_calculations(df):
+def moduli_distributions(df):
     '''
 
     Parameters
@@ -243,20 +238,164 @@ def moduli_calculations(df):
             
     return S_values, angles     
 
-def calculation(file, radius, beads):
-    # print(file, beads, radius)
+
+def func(x,a,b,c):
+    return a*((x-b)**2) +c
+
+
+def modulus_evaluation(data_dict,file):
     
-    df = coord_handling(file, beads, radius)    
-    S_values, angles = moduli_calculations(df)
+    try:
+        S_values = data_dict['S_values']
+    except TypeError:
+        return TypeError
+    
+    S_values = S_values[np.where((S_values>-1)&(S_values<1))[0]]
+    
+    P = np.histogram(S_values, bins = 100)
+    
+    bin_mid_points = (P[1][:-1] + P[1][1:])/2
+    bin_probs = P[0]/P[0].sum()
+    
+    gmodel = lm.models.VoigtModel()
+    pars = gmodel.guess(bin_probs, x=bin_mid_points)
+    out = gmodel.fit(bin_probs, pars, x=bin_mid_points)
+    # print(out.fit_report())
+    # out.plot_fit()
+    
+    op_mu = out.best_values['center']
+    op_sig = out.best_values['sigma']
+    
+    LHS = -2 * np.log(bin_probs)
+    
+    n_sigma = 2
+    
+    a_ = bin_mid_points[np.where((bin_mid_points>(op_mu-(n_sigma*op_sig)))&(bin_mid_points<(op_mu+(n_sigma*op_sig))))[0]]
+    b_ = LHS[np.where((bin_mid_points>(op_mu-(n_sigma*op_sig)))&(bin_mid_points<(op_mu+(n_sigma*op_sig))))[0]]
+    
+    hmodel = lm.Model(func)
+    result = hmodel.fit(b_,x=a_, a=10, b= -0.2, c=0)
+    
+    res_a = result.params['a'].value
+    res_b = result.params['b'].value
+    res_c = result.params['c'].value
+    err_a = result.params['a'].stderr
+    
+    
+    '''
+    the tilt modulus
+    '''
+    angles = data_dict['angles']
+    
+    angles_conv = -np.abs(angles-(np.pi/2))+np.pi/2
+    
+    # plt.hist(angles_degree, bins = 40)
+    
+    P1 = np.histogram(angles_conv, bins = 100)
+    bin_mid_points1 = (P1[1][:-1] + P1[1][1:])/2
+    bin_probs1 = P1[0]/P1[0].sum()
+    
+    bin_mid_points1_degree = bin_mid_points1*(180/np.pi)
+    
+    
+    gmodel1 = lm.models.SkewedGaussianModel()
+    pars1 = gmodel1.guess(bin_probs1, x=bin_mid_points1)
+    out1 = gmodel1.fit(bin_probs1, pars1, x=bin_mid_points1)
+    
+    
+    op_sig1 = out1.best_values['sigma']
+    op_alp1 = out1.best_values['gamma']
+    
+    delta = op_alp1/np.sqrt(1+(op_alp1**2))
+    mu_z = np.sqrt(2/np.pi)*delta
+    sigma_z = np.sqrt(1-(mu_z**2))
+    
+    gamma1_factor = ((4-np.pi)/2)
+    gamma1_nom = (delta*np.sqrt(2/np.pi))**3
+    gamma1_den = (1- 2*delta**2 /np.pi)**(3/2)
+    gamma1 = gamma1_factor*(gamma1_nom/gamma1_den)
+    
+    Mo = mu_z - (gamma1*sigma_z)/2 - ((np.sign(op_alp1)/2)*np.exp((-2*np.pi)/np.abs(op_alp1)))
+        
+    sig = np.sqrt((op_sig1**2)*(1-(2*(delta**2))/np.pi))
+        
+    LHS_KbT = np.log(bin_probs1/np.sin(bin_mid_points1)) * -2
+    
+    Mo_deg = Mo*(180/np.pi)
+    sig_deg = sig*(180/np.pi)
+    
+    a1_ = bin_mid_points1[np.where((bin_mid_points1>(Mo-(sig)))&(bin_mid_points1<(Mo+(sig))))[0]]
+    b1_ = LHS_KbT[np.where((bin_mid_points1>(Mo-(sig)))&(bin_mid_points1<(Mo+(sig))))[0]]
+     
+    hmodel1 = lm.Model(func)
+    result1 = hmodel1.fit(b1_,x=a1_, a=10, b= -0.2, c=0)
+    
+    res_a1 = result1.params['a'].value
+    res_b1 = result1.params['b'].value
+    res_c1 = result1.params['c'].value
+    err_a1 = result1.params['a'].stderr
+    
+    '''
+    make the plot
+    '''
+    fig, axarr = plt.subplots(2,2, figsize = (10,10),sharex = 'col')
+    
+    axarr[0,0].scatter(bin_mid_points, bin_probs)
+    axarr[0,0].set_ylabel('P(S)')
+    axarr[0,0].set_ylim(0,bin_probs.max()+0.005)
+    axarr[0,0].axvline(op_mu-(n_sigma*op_sig), ls = '--', c = '#e79d24')
+    axarr[0,0].axvline(op_mu+(n_sigma*op_sig), ls = '--', c = '#e79d24')
+    
+    axarr[1,0].scatter(bin_mid_points, LHS)
+    xp = np.linspace(op_mu-(4*op_sig), op_mu+(4*op_sig), 100)
+    
+    axarr[1,0].plot(xp, func(xp, res_a, res_b, res_c), c= '#b6253a')
+    axarr[1,0].axvline(op_mu-(n_sigma*op_sig), ls = '--', c = '#e79d24')
+    axarr[1,0].axvline(op_mu+(n_sigma*op_sig), ls = '--', c = '#e79d24')
+    axarr[1,0].text(0.05,0.05, 'K$_{c}$ = %.3f [k$_{B}$T]' %res_a, transform = axarr[1,0].transAxes)
+    axarr[1,0].set_ylabel('PMF(S) [k$_{B}$T]')
+    axarr[1,0].set_xlabel('S')
+    
+    
+    axarr[0,1].scatter(bin_mid_points1_degree, bin_probs1)
+    axarr[0,1].set_ylabel(r'P($\theta$)')
+    axarr[0,1].set_ylim(0,bin_probs1.max()+0.005)
+    axarr[0,1].axvline(Mo_deg-(sig_deg), ls = '--', c = '#e79d24')
+    axarr[0,1].axvline(Mo_deg+(sig_deg), ls = '--', c = '#e79d24')
+    axarr[0,1].yaxis.set_label_position("right")
+    axarr[0,1].yaxis.tick_right()
+    
+    axarr[1,1].scatter(bin_mid_points1_degree, LHS_KbT)
+    xp1 = np.linspace(0,np.pi/2, 100)
+    axarr[1,1].plot(bin_mid_points1_degree, func(xp1, res_a1, res_b1, res_c1), c= '#b6253a')
+    axarr[1,1].axvline(Mo_deg-(sig_deg), ls = '--', c = '#e79d24')
+    axarr[1,1].axvline(Mo_deg+(sig_deg), ls = '--', c = '#e79d24')
+    axarr[1,1].text(0.7,0.05, r'$\chi_{c}$ = %.3f [k$_{B}$T]' %res_a1, transform = axarr[1,1].transAxes)
+    axarr[1,1].set_ylabel(r'PMF($\theta$) [k$_{B}$T]')
+    axarr[1,1].set_xlabel(r'$\theta$')
+    axarr[1,1].yaxis.set_label_position("right")
+    axarr[1,1].yaxis.tick_right()
+    
+    
+    fig.savefig(file.split('.p')[0]+'.png', dpi =200)
+    
+    plt.close(fig)
+    
+    return np.array([res_a, err_a, res_a1, err_a1])
+
+def calculation(file, radius, atoms):
+    
+    df = coord_handling(file, atoms, radius)    
+    S_values, angles = moduli_distributions(df)
     
     d = {'S_values': S_values,
           'angles': angles}
     
-    # print(file, radius, type(file), type(radius))
+    results = modulus_evaluation(d, file)
     
     fname = os.path.abspath(file).split('.pdb')[0]+'_cutoff_'+str(radius)+'_moduli.p'
-    # print(fname)
-    pickle.dump(d, open(fname, 'wb'))
+ 
+    pickle.dump(results, open(fname, 'wb'))
    
 
 
@@ -271,26 +410,23 @@ def argument_reader():
     args = parser.parse_args()
     
     
-    beads = [list(args.head), list(args.neutral), list(args.tail)]
+    atoms = [list(args.head), list(args.neutral), list(args.tail)]
     
     radius = np.array(args.radius)
     
-    return beads, radius 
+    return atoms, radius 
 
 if __name__=='__main__':
 
     files = glob.glob('*.pdb')
     
-    beads, radius = argument_reader()
-    # print(beads, type(beads))
-    # for i in beads:
-    #     print(i, type(i))
+    atoms, radius = argument_reader()
         
     prod = list(product(files, radius))
     
     paramlist = []
     for i in prod:
-        paramlist.append(i+(beads,))
+        paramlist.append(i+(atoms,))
 
     k = len(paramlist)/14
         
