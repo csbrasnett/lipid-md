@@ -242,8 +242,6 @@ def coord_handling(file, cut_off_radius, bead):
     H_vals = []
     successes = []
     funs = []
-    evecs = []
-    index_pairs = []
     
     for index in range(coords.shape[0]):
         # print(file, index, coords.shape[0])
@@ -251,8 +249,6 @@ def coord_handling(file, cut_off_radius, bead):
         #find the coordinates within a cutoff radius to form a point cloud.
         surrounding_coords = get_surrounding_coords(tree, coords, index, cut_off_radius)
         
-        #in order to calculate the bending modulus, find the index of the molecule closest 
-        closest_index = tree.query(coords[index],2)[1][1]
         
         
         '''
@@ -273,10 +269,6 @@ def coord_handling(file, cut_off_radius, bead):
             successes.append(S_)
             funs.append(F_)
 
-            #get the data required to calculate bending modulus.                    
-            index_pairs.append(np.array([index, closest_index]))
-            evecs.append(a[2])
-
 
     d = {'K': K_vals,
          'H': H_vals,
@@ -295,11 +287,7 @@ def coord_handling(file, cut_off_radius, bead):
     
     '''
     
-    d1 = {'Index Pairs': index_pairs,
-          'evecs': evecs}
-    
     df = pd.DataFrame(d)
-    df1 = pd.DataFrame(d1)
 
     b = list(bead)
     c = ''.join(b)
@@ -307,8 +295,6 @@ def coord_handling(file, cut_off_radius, bead):
     fname = os.path.abspath(file).split('.pdb')[0]+'_'+c+'_results_Rc_'+str(cut_off_radius)+'.p'
     pickle.dump(df, open(fname, 'wb'))
     
-    fname1 = os.path.abspath(file).split('.pdb')[0]+'_'+c+'_extra_results_Rc_'+str(cut_off_radius)+'.p'
-    pickle.dump(df1, open(fname1, 'wb'))
 
 
 
