@@ -315,7 +315,7 @@ def coord_handling(file, cut_off_radius, bead):
 def argument_reader():
     parser = argparse.ArgumentParser()
     
-    parser.add_argument('-b', '--bead', type = str, nargs = '+',  default = 'C5A', help = 'The beads within the simulation frame to fit parabolas to')
+    parser.add_argument('-b', '--bead', type = str, nargs = '+',  default = ['C5A'], help = 'The beads within the simulation frame to fit parabolas to')
     parser.add_argument('-r', '--radius', type = int, nargs = '+',  default = [30], help = 'Search radius cutoff length for creating point clouds')
 
     args = parser.parse_args()
@@ -340,7 +340,6 @@ if __name__ == '__main__':
     f = glob.glob('*.pdb')   
     
     bead, ball_point_radii = argument_reader()
-    
     paramlist = make_paramlist(f, ball_point_radii, bead)
     
     k = len(paramlist)/14
