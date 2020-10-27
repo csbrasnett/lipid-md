@@ -194,7 +194,7 @@ def fitting(a, index, file, cut_off_radius, bead):
     eval_val = res.fun
     
     r = np.random.random()
-    if r>0.999:
+    if r>0.9999:
         fit_writer(a[0], res.x, index, file, cut_off_radius, bead)
     
     return valK, valH, success, eval_val
