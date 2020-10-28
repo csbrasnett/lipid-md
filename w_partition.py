@@ -28,7 +28,7 @@ def bd_position_testing(f, bd_types_init):
     pipeline.modifiers.append(WrapPeriodicImagesModifier())
 
     #select all lipid molecules
-    pipeline.modifiers.append(SelectTypeModifier(property = 'Particle Type', types = {'W'}))
+    pipeline.modifiers.append(SelectTypeModifier(property = 'Particle Type', types = {'WN'}))
 
     #construct a surface from the water molecules
     mod1 = ConstructSurfaceModifier(radius = 10,only_selected = True,smoothing_level =8)
@@ -38,13 +38,15 @@ def bd_position_testing(f, bd_types_init):
 
     props = np.zeros(0)
 
+
     for i in range(len(loops)):
         try:
-            print('loops: %d/%d' %(i+1, len(loops)))
+            # print('loops: %d/%d' %(i+1, len(loops)))
             mod1.radius = loops[i]
-
+            
             #compute the pipeline
             data = pipeline.compute()
+            print(f, data)
 
             #get the surface mesh
             mesh = data.surfaces['surface']
@@ -58,7 +60,7 @@ def bd_position_testing(f, bd_types_init):
             sel = np.where(data1.particles.selection[:]>0)[0]
             #now find the positions of the butanediol particles
             BD_position = data1.particles.positions[:][sel]
-
+            
             inside_surface = np.zeros(0)
             outside_surface = np.zeros(0)
             
@@ -66,6 +68,7 @@ def bd_position_testing(f, bd_types_init):
             for j in BD_position:
                 #test whether the position is inside the water surface or not.
                 pos = mesh.locate_point(j)
+                print(pos)
                 #keep count of whether it is or not.
                 try:
                     if pos == -1:
