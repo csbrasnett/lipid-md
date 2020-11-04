@@ -28,7 +28,7 @@ def bd_position_testing(f, bd_types_init):
     pipeline.modifiers.append(WrapPeriodicImagesModifier())
 
     #select all lipid molecules
-    pipeline.modifiers.append(SelectTypeModifier(property = 'Particle Type', types = {'WN'}))
+    pipeline.modifiers.append(SelectTypeModifier(property = 'Particle Type', types = {'W'}))
 
     #construct a surface from the water molecules
     mod1 = ConstructSurfaceModifier(radius = 10,only_selected = True,smoothing_level =8)
