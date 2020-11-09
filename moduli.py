@@ -18,7 +18,7 @@ import argparse
 from itertools import product
 from multiprocessing import get_context
 import lmfit as lm
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 def file_reader(file, atoms, wrap = False):
     pipeline = ov.io.import_file(file)
@@ -335,51 +335,51 @@ def modulus_evaluation(data_dict,file):
     res_c1 = result1.params['c'].value
     err_a1 = result1.params['a'].stderr
     
-    '''
-    make the plot
-    '''
-    fig, axarr = plt.subplots(2,2, figsize = (10,10),sharex = 'col')
+    # '''
+    # make the plot
+    # '''
+    # fig, axarr = plt.subplots(2,2, figsize = (10,10),sharex = 'col')
     
-    axarr[0,0].scatter(bin_mid_points, bin_probs)
-    axarr[0,0].set_ylabel('P(S)')
-    axarr[0,0].set_ylim(0,bin_probs.max()+0.005)
-    axarr[0,0].axvline(op_mu-(n_sigma*op_sig), ls = '--', c = '#e79d24')
-    axarr[0,0].axvline(op_mu+(n_sigma*op_sig), ls = '--', c = '#e79d24')
+    # axarr[0,0].scatter(bin_mid_points, bin_probs)
+    # axarr[0,0].set_ylabel('P(S)')
+    # axarr[0,0].set_ylim(0,bin_probs.max()+0.005)
+    # axarr[0,0].axvline(op_mu-(n_sigma*op_sig), ls = '--', c = '#e79d24')
+    # axarr[0,0].axvline(op_mu+(n_sigma*op_sig), ls = '--', c = '#e79d24')
     
-    axarr[1,0].scatter(bin_mid_points, LHS)
-    xp = np.linspace(op_mu-(4*op_sig), op_mu+(4*op_sig), 100)
+    # axarr[1,0].scatter(bin_mid_points, LHS)
+    # xp = np.linspace(op_mu-(4*op_sig), op_mu+(4*op_sig), 100)
     
-    axarr[1,0].plot(xp, func(xp, res_a, res_b, res_c), c= '#b6253a')
-    axarr[1,0].axvline(op_mu-(n_sigma*op_sig), ls = '--', c = '#e79d24')
-    axarr[1,0].axvline(op_mu+(n_sigma*op_sig), ls = '--', c = '#e79d24')
-    axarr[1,0].text(0.05,0.05, 'K$_{c}$ = %.3f [k$_{B}$T]' %res_a, transform = axarr[1,0].transAxes)
-    axarr[1,0].set_ylabel('PMF(S) [k$_{B}$T]')
-    axarr[1,0].set_xlabel('S')
-    
-    
-    axarr[0,1].scatter(bin_mid_points1_degree, bin_probs1)
-    axarr[0,1].set_ylabel(r'P($\theta$)')
-    axarr[0,1].set_ylim(0,bin_probs1.max()+0.005)
-    axarr[0,1].axvline(Mo_deg-(sig_deg), ls = '--', c = '#e79d24')
-    axarr[0,1].axvline(Mo_deg+(sig_deg), ls = '--', c = '#e79d24')
-    axarr[0,1].yaxis.set_label_position("right")
-    axarr[0,1].yaxis.tick_right()
-    
-    axarr[1,1].scatter(bin_mid_points1_degree, LHS_KbT)
-    xp1 = np.linspace(0,np.pi/2, 100)
-    axarr[1,1].plot(bin_mid_points1_degree, func(xp1, res_a1, res_b1, res_c1), c= '#b6253a')
-    axarr[1,1].axvline(Mo_deg-(sig_deg), ls = '--', c = '#e79d24')
-    axarr[1,1].axvline(Mo_deg+(sig_deg), ls = '--', c = '#e79d24')
-    axarr[1,1].text(0.7,0.05, r'$\chi_{c}$ = %.3f [k$_{B}$T]' %res_a1, transform = axarr[1,1].transAxes)
-    axarr[1,1].set_ylabel(r'PMF($\theta$) [k$_{B}$T]')
-    axarr[1,1].set_xlabel(r'$\theta$')
-    axarr[1,1].yaxis.set_label_position("right")
-    axarr[1,1].yaxis.tick_right()
+    # axarr[1,0].plot(xp, func(xp, res_a, res_b, res_c), c= '#b6253a')
+    # axarr[1,0].axvline(op_mu-(n_sigma*op_sig), ls = '--', c = '#e79d24')
+    # axarr[1,0].axvline(op_mu+(n_sigma*op_sig), ls = '--', c = '#e79d24')
+    # axarr[1,0].text(0.05,0.05, 'K$_{c}$ = %.3f [k$_{B}$T]' %res_a, transform = axarr[1,0].transAxes)
+    # axarr[1,0].set_ylabel('PMF(S) [k$_{B}$T]')
+    # axarr[1,0].set_xlabel('S')
     
     
-    fig.savefig(file.split('.p')[0]+'.png', dpi =200)
+    # axarr[0,1].scatter(bin_mid_points1_degree, bin_probs1)
+    # axarr[0,1].set_ylabel(r'P($\theta$)')
+    # axarr[0,1].set_ylim(0,bin_probs1.max()+0.005)
+    # axarr[0,1].axvline(Mo_deg-(sig_deg), ls = '--', c = '#e79d24')
+    # axarr[0,1].axvline(Mo_deg+(sig_deg), ls = '--', c = '#e79d24')
+    # axarr[0,1].yaxis.set_label_position("right")
+    # axarr[0,1].yaxis.tick_right()
     
-    plt.close(fig)
+    # axarr[1,1].scatter(bin_mid_points1_degree, LHS_KbT)
+    # xp1 = np.linspace(0,np.pi/2, 100)
+    # axarr[1,1].plot(bin_mid_points1_degree, func(xp1, res_a1, res_b1, res_c1), c= '#b6253a')
+    # axarr[1,1].axvline(Mo_deg-(sig_deg), ls = '--', c = '#e79d24')
+    # axarr[1,1].axvline(Mo_deg+(sig_deg), ls = '--', c = '#e79d24')
+    # axarr[1,1].text(0.7,0.05, r'$\chi_{c}$ = %.3f [k$_{B}$T]' %res_a1, transform = axarr[1,1].transAxes)
+    # axarr[1,1].set_ylabel(r'PMF($\theta$) [k$_{B}$T]')
+    # axarr[1,1].set_xlabel(r'$\theta$')
+    # axarr[1,1].yaxis.set_label_position("right")
+    # axarr[1,1].yaxis.tick_right()
+    
+    
+    # fig.savefig(file.split('.p')[0]+'.png', dpi =200)
+    
+    # plt.close(fig)
     
     return np.array([res_a, err_a, res_a1, err_a1])
 
