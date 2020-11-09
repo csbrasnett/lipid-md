@@ -18,7 +18,7 @@ import argparse
 from itertools import product
 from multiprocessing import get_context
 import lmfit as lm
-import maplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 def file_reader(file, atoms, wrap = False):
     pipeline = ov.io.import_file(file)

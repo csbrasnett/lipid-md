@@ -74,9 +74,11 @@ def reader(file):
                     Wz.append(z)
                     W_atomname.append(atom_name)
                     
+                    W_residuenumber.append(residue_number)
+                    
                     
     MAG99_list = ['MO']* len(MOx)
-    W_list = ['W']* len(Wx)
+    W_list = ['CHOL']* len(Wx)
     
     MO_atomnumber = list(range(1, len(MOx)+1))
     W_atomnumber = list(range(len(MOx)+1, len(MOx)+1+len(Wx)))
@@ -91,14 +93,27 @@ def reader(file):
         for j in range(7):
             a = np.append(a, i)
 
-    W_residuenumber = list(range(int(a[-1]+1), int(a[-1]+1+len(W_atomnumber))))
+    
+    b = np.zeros(0)
+    
+    for i in range(1,int(len(W_atomnumber)/9)+1):
+        for j in range(9):
+            b = np.append(b, i+a[-1])
+
+    
+
+
+    # b = list(range(int(a[-1]+1), int(a[-1]+1+len(W_atomnumber))))
     
     # print(len(a), len(MAG99_list), len(MO_atomname), len(MO_atomnumber), len(MOx), len(MOy), len(MOz))
     
     MO_df = pd.DataFrame({'Residue Number': a, 'MAG99': MAG99_list, 'Atom Name': MO_atomname,
                           'Atom Number': MO_atomnumber, 'x': MOx, 'y': MOy, 'z': MOz})
     
-    W_df = pd.DataFrame({'Residue Number': W_residuenumber, 'W': W_list, 'Atom Name': W_atomname,
+
+    # print(W_residuenumber,b)
+    
+    W_df = pd.DataFrame({'Residue Number': b, 'CHOL': W_list, 'Atom Name': W_atomname,
                           'Atom Number': W_atomnumber, 'x': Wx, 'y': Wy, 'z': Wz})
     
     data_dict = {'MO_df': MO_df,
@@ -143,7 +158,7 @@ def writer(data_dict,file):
         for j in range(W_df.shape[0]):
             
             a1 = W_df.iloc[j]['Residue Number']
-            b1 = W_df.iloc[j]['W']
+            b1 = W_df.iloc[j]['CHOL']
             c1 = W_df.iloc[j]['Atom Name']
             d1 = W_df.iloc[j]['Atom Number']
             e1 = W_df.iloc[j]['x']
@@ -176,5 +191,7 @@ if __name__ == '__main__':
     for i in a:
         b = reader(i)
         writer(b,i)
+
+
 
     
