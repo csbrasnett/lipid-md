@@ -96,8 +96,8 @@ def reader(file):
     
     b = np.zeros(0)
     
-    for i in range(1,int(len(W_atomnumber)/9)+1):
-        for j in range(9):
+    for i in range(1,int(len(W_atomnumber)/8)+1):
+        for j in range(8):
             b = np.append(b, i+a[-1])
 
     
