@@ -470,9 +470,7 @@ def calculation(file, radius, atoms, multi):
     df = coord_handling(file, atoms, radius, multi)    
 
     distribution_results = moduli_distributions(df)
-    temp_name = 'distributions_'+file.split('.pdb')[0]+'_.p'
-    pickle.dump(distribution_results, open(temp_name, 'wb'))
-        
+
     results = modulus_evaluation(distribution_results)
     
     fname = os.path.abspath(file).split('.pdb')[0]+'_cutoff_'+str(radius)+'_moduli.p'
@@ -519,12 +517,7 @@ if __name__=='__main__':
         csize = 1
     else:
         csize = int(k)
-    
-    # calculation(files[0], radius, atoms, multi)
-
-    print(paramlist)
-    print(paramlist[0])
-    
+        
     with get_context("spawn").Pool(processes = 14) as pool:
         pool.starmap(calculation, paramlist, chunksize = csize)
 
