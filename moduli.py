@@ -292,65 +292,70 @@ def modulus_evaluation(data):
     '''
     the bending modulus
     '''
-    for i in range(len(unique_types)):
-        
-        #find the indicies for this type of pair
-        this_type = np.where(types==unique_types[i])[0]
-        
-        #find the number of pairs involved in this 
-        n_pairs = len(this_type)
-        n_pairs_total = np.append(n_pairs_total, n_pairs)
-        
-        #use the distribution of S to calculate chi for this pair type
-        S_vals_init = S_values[this_type]
-                
-        S_values_final = S_vals_init[np.where((S_vals_init>-1)&(S_vals_init<1))[0]]
-        
-        P = np.histogram(S_values_final, bins = 100)
-        
-        bin_mid_points = (P[1][:-1] + P[1][1:])/2
-        bin_probs = P[0]/P[0].sum()
-        
-        gmodel = lm.models.VoigtModel()
-        pars = gmodel.guess(bin_probs, x=bin_mid_points)
-        out = gmodel.fit(bin_probs, pars, x=bin_mid_points)
-        
+    try:
+        for i in range(len(unique_types)):
+            #find the indicies for this type of pair
+            this_type = np.where(types==unique_types[i])[0]
+            
+            #find the number of pairs involved in this 
+            n_pairs = len(this_type)
+            n_pairs_total = np.append(n_pairs_total, n_pairs)
+            
+            #use the distribution of S to calculate chi for this pair type
+            S_vals_init = S_values[this_type]
+                    
+            S_values_final = S_vals_init[np.where((S_vals_init>-1)&(S_vals_init<1))[0]]
+            
+            P = np.histogram(S_values_final, bins = 100)
+            
+            bin_mid_points = (P[1][:-1] + P[1][1:])/2
+            bin_probs = P[0]/P[0].sum()
+            
+            gmodel = lm.models.VoigtModel()
+            pars = gmodel.guess(bin_probs, x=bin_mid_points)
+            out = gmodel.fit(bin_probs, pars, x=bin_mid_points)
+            
+    
+            op_mu = out.best_values['center']
+            op_sig = out.best_values['sigma']
+            
+            LHS = -2 * np.log(bin_probs)        
+    
+            
+            n_sigma = 2
+            a_ = bin_mid_points[np.where((bin_mid_points>(op_mu-(n_sigma*op_sig)))&(bin_mid_points<(op_mu+(n_sigma*op_sig))))[0]]
+            b_ = LHS[np.where((bin_mid_points>(op_mu-(n_sigma*op_sig)))&(bin_mid_points<(op_mu+(n_sigma*op_sig))))[0]]
+            
+            a_ = a_[~np.isnan(a_)]
+            b_ = b_[~np.isnan(b_)]
+            
+            hmodel = lm.Model(func, nan_policy='omit')
+            
+            
+            result = hmodel.fit(b_,x=a_, a=10, b= -0.2, c=0)
+            
+            res_a = result.params['a'].value
+            res_b = result.params['b'].value
+            res_c = result.params['c'].value
+            err_a = result.params['a'].stderr
+            
+            chi = np.append(chi, res_a)
+            chi_error = np.append(chi_error, err_a)
 
-        op_mu = out.best_values['center']
-        op_sig = out.best_values['sigma']
+        #calculate the total bending modulus for the system
+        total_pairs = np.sum(n_pairs_total)
+        X = (1/total_pairs)*np.sum(n_pairs_total/chi)
+        Kc = 1/X
         
-        LHS = -2 * np.log(bin_probs)        
-
-        
-        n_sigma = 2
-        a_ = bin_mid_points[np.where((bin_mid_points>(op_mu-(n_sigma*op_sig)))&(bin_mid_points<(op_mu+(n_sigma*op_sig))))[0]]
-        b_ = LHS[np.where((bin_mid_points>(op_mu-(n_sigma*op_sig)))&(bin_mid_points<(op_mu+(n_sigma*op_sig))))[0]]
-        
-        a_ = a_[~np.isnan(a_)]
-        b_ = b_[~np.isnan(b_)]
-        
-        hmodel = lm.Model(func, nan_policy='omit')
-        
-        
-        result = hmodel.fit(b_,x=a_, a=10, b= -0.2, c=0)
-        
-        res_a = result.params['a'].value
-        res_b = result.params['b'].value
-        res_c = result.params['c'].value
-        err_a = result.params['a'].stderr
-        
-        chi = np.append(chi, res_a)
-        chi_error = np.append(chi_error, err_a)
+        #work out the error in X from chi and then finally error in Kc 
+        X_err = np.sqrt(np.sum((np.abs((n_pairs_total/total_pairs)*(-1/(chi**2)))**2)*(chi_error**2)))
+        Kc_err = X_err/(X**2)
     
-    #calculate the total bending modulus for the system
-    total_pairs = np.sum(n_pairs_total)
-    X = (1/total_pairs)*np.sum(n_pairs_total/chi)
-    Kc = 1/X
-    
-    #work out the error in X from chi and then finally error in Kc 
-    X_err = np.sqrt(np.sum((np.abs((n_pairs_total/total_pairs)*(-1/(chi**2)))**2)*(chi_error**2)))
-    Kc_err = X_err/(X**2)
-    
+    except TypeError as e1:
+        Kc = 0
+        Kc_err = 0
+        pass
+        
     '''
     the tilt modulus
     '''
