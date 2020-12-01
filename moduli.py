@@ -352,8 +352,8 @@ def modulus_evaluation(data):
         Kc_err = X_err/(X**2)
     
     except TypeError as e1:
-        Kc = 0
-        Kc_err = 0
+        Kc = np.nan
+        Kc_err = np.nan
         pass
         
     '''
@@ -362,13 +362,12 @@ def modulus_evaluation(data):
 
     
     angles_conv = -np.abs(angles-(np.pi/2))+np.pi/2
-            
+
     P1 = np.histogram(angles_conv, bins = 100)
     bin_mid_points1 = (P1[1][:-1] + P1[1][1:])/2
     bin_probs1 = P1[0]/P1[0].sum()
     
     bin_mid_points1_degree = bin_mid_points1*(180/np.pi)
-    
     
     gmodel1 = lm.models.SkewedGaussianModel()
     pars1 = gmodel1.guess(bin_probs1, x=bin_mid_points1)
