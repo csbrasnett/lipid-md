@@ -136,7 +136,7 @@ if __name__=="__main__":
         vol_fracs = np.append(vol_fracs, get_solid_vol(i))
         
         radii = np.zeros(0)
-        
+        print(vol_fracs)
         for j in xyzs.keys():
             xyz = xyzs[j]
             
@@ -146,11 +146,14 @@ if __name__=="__main__":
                 # print(est_p[4])
                 radii = np.append(radii, est_p[4])
                 
-                  
+        print(radii)
         # print(radii.mean(), radii.std())
         all_radii = np.append(all_radii, radii.mean())
         all_radii_std = np.append(all_radii_std, radii.std())
     
+    all_radii = all_radii[~np.isnan(all_radii)]
+    all_radii_std = all_radii_std[~np.isnan(all_radii_std)]
+
     
     d_w = 2*all_radii.mean()
     d_w_err = all_radii_std.mean()/np.sqrt(len(all_radii_std))
