@@ -166,6 +166,8 @@ if __name__=="__main__":
          'a error': a_err             
          }
     
+    pickle.dump(d, open('cyclinder_results.p', 'wb'))
+    
     
     
     
