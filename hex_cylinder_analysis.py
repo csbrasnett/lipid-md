@@ -123,7 +123,7 @@ if __name__=="__main__":
     '''
     
     
-    files = glob.glob('/Users/Chris/OneDrive - University of Bristol/PhD/simulation_work/curvature_testing/hexagonal/expanded_cell/pdb/*.pdb')[:3]
+    files = glob.glob('*.pdb')
     
     all_radii = np.zeros(0)
     all_radii_std = np.zeros(0)
