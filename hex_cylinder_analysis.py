@@ -10,7 +10,8 @@ import ovito as ov
 import numpy as np
 import glob
 from scipy.optimize import leastsq
-    
+import pickle
+
 def get_coords(f):
     
     pipeline = ov.io.import_file(f)
@@ -66,7 +67,6 @@ def get_solid_vol(file):
         cell_volume = data.attributes['ConstructSurfaceMesh.cell_volume']
         
         fraction = solid_volume/cell_volume
-        print(fraction)
         vol_frac = np.append(vol_frac, fraction)
     
     return vol_frac
@@ -123,7 +123,7 @@ if __name__=="__main__":
     '''
     
     
-    files = glob.glob('*.pdb')
+    files = glob.glob('/Users/Chris/OneDrive - University of Bristol/PhD/simulation_work/curvature_testing/hexagonal/expanded_cell/pdb/*.pdb')[:3]
     
     all_radii = np.zeros(0)
     all_radii_std = np.zeros(0)
@@ -151,7 +151,6 @@ if __name__=="__main__":
         all_radii = np.append(all_radii, radii.mean())
         all_radii_std = np.append(all_radii_std, radii.std())
     
-    print('Radius = %.3f ± %.3f' %(all_radii.mean(), all_radii_std.mean()/np.sqrt(len(all_radii_std))))
     
     d_w = 2*all_radii.mean()
     d_w_err = all_radii_std.mean()/np.sqrt(len(all_radii_std))
@@ -160,7 +159,13 @@ if __name__=="__main__":
 
     a_err = np.sqrt((((a/(2*vol_fracs.mean()))**2)*((vol_fracs.std()/np.sqrt(len(vol_fracs)))**2) +
              (((a/d_w)**2)*(d_w_err**2))))
-    print('a = %.3f ± %.3f' %(a, a_err))
+    
+    d = {'radius': all_radii.mean(),
+         'radius error':  all_radii_std.mean()/np.sqrt(len(all_radii_std)),
+         'a': a,
+         'a error': a_err             
+         }
+    
     
     
     
