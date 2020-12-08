@@ -117,7 +117,7 @@ def get_surrounding_coords(tree, C5Acoords, index, cut_off_radius):
     return C5Acoords[surrounding_indicies] 
 
 
-def fit_writer(initial_points, fit_result, index, q,w,e, tp,co,file):
+def fit_writer(initial_points, fit_result, index, q,co,file):
     
     #set up the mgrid in teh right spatial position
     d1 = initial_points[0:,0].mean()
@@ -148,13 +148,10 @@ def fit_writer(initial_points, fit_result, index, q,w,e, tp,co,file):
         
         points_out = np.vstack((initial_points, surface_points))
         
-        # print(initial_points.shape, surface_points.shape, w,e)
-        
-        # names_out = ['C5A']*w +['GL1']*e + ['fitted']*len(surface_points)
         
         names_out = ['initial']*len(initial_points) + ['fitted']*len(surface_points)
         
-        fname = os.path.abspath(file).split('.pdb')[0] +'_'+ str(tp) +'cutoff_'+str(co)+'_points_out_'+str(index)+'_' + q +'.atom'
+        fname = os.path.abspath(file).split('.pdb')[0] +'_cutoff_'+str(co)+'_points_out_'+str(index)+'_' + q +'.atom'
         
         with open(fname, 'w') as f:
             atom.write(points_out, np.array([[points_out[0:,0].min(), points_out[0:,0].max()],
@@ -168,7 +165,7 @@ def fit_writer(initial_points, fit_result, index, q,w,e, tp,co,file):
         pass
 
     
-def fitting(a,w,e,index, cut_off,file):
+def fitting(a,index, cut_off,file):
         
     x = a[0:,0]
     y = a[0:,1]
@@ -259,9 +256,9 @@ def fitting(a,w,e,index, cut_off,file):
     r = np.random.random()
     # print('r', r)
     if r>0.999:
-        fit_writer(a, res_div.x, index, 'div',w,e, 1,cut_off,file)
-        fit_writer(a, res_lsq.x, index, 'lsq',w,e, 1,cut_off,file)
-        fit_writer(a, res_min.x, index, 'min',w,e, 1,cut_off,file)
+        fit_writer(a, res_div.x, index, 'div',cut_off,file)
+        fit_writer(a, res_lsq.x, index, 'lsq',cut_off,file)
+        fit_writer(a, res_min.x, index, 'min',cut_off,file)
 
     return df
 
@@ -316,7 +313,7 @@ def func(file, cut_off, bead):
                 
                 a = pca_res[0]
                 
-                df = fitting(a, w, e, index, cut_off, file)
+                df = fitting(a, index, cut_off, file)
             
                 data_out[index] = df
         
