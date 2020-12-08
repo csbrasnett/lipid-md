@@ -17,7 +17,7 @@ from scipy import linalg
 from mdma import atom
 from skimage import measure
 from itertools import product
-from multiprocessing import get_context
+from multiprocessing import get_context, current_process
 import time
 import pandas
 import argparse
@@ -192,18 +192,34 @@ def fitting(a,w,e,index, cut_off,file):
     b = [(-1, 1),(-1, 1),(-1, 1),(-1, 1),(-1, 1),(-1, 1)]
     x0 = np.array([1,1,1,1,1,1,1])
 
+    # print('starting fits')
+
+    current = current_process()
+
     #perform a least squares fit of the quadric form to the point cloud
     start = time.perf_counter()
+    
     res_div = differential_evolution(fun, b, args = (x,y,z), maxiter = 500)
     t1 = time.perf_counter()
-    res_shg = shgo(fun, b, args = (x,y,z), options = {'maxiter': 500})
+    # print('t1', current.name, current._identity, t1-start, res_div.nit)
+    
+    res_shg = shgo(fun, b, args = (x,y,z))#, options = {'maxiter': 10})
     t2 = time.perf_counter()
+    # print('t2', current.name, current._identity, t2-t1, res_shg.nit)
+    
     res_dan = dual_annealing(fun, b, args = (x,y,z), maxiter = 500)
     t3 = time.perf_counter()
+    # print('t3', current.name, current._identity, t3-t2, res_dan.nit)
+    
     res_lsq = least_squares(fun, x0, args = (x,y,z), max_nfev = 500)
     t4 = time.perf_counter()
+    # print('t4', current.name, current._identity, t4-t3, res_lsq.nfev)
+    
     res_min = minimize(fun, x0, args = (x,y,z), options = {'maxiter': 500})
     t5 = time.perf_counter()
+    # print('t5', current.name, current._identity, t5-t4, res_min.nit)
+    
+    # print('ending fits')
     
     #calculate the gaussian curvature from the fit of the parameters
     valKdiv = gaussian_curvature(res_div.x)
@@ -223,7 +239,8 @@ def fitting(a,w,e,index, cut_off,file):
     
     times = np.array([t1-start, t2-t1, t3-t2, t4-t3, t5-t4])
     func_vals = np.array([res_div.fun, res_shg.fun, res_dan.fun, res_lsq.fun[0], res_min.fun])
-    n_evals = np.array([res_div.nfev, res_shg.nfev, res_dan.nfev, res_lsq.nfev, res_min.nfev])
+    n_its = np.array([res_div.nit, res_shg.nit, res_dan.nit, res_lsq.nfev, res_min.nit])
+    n_fevs = np.array([res_div.nfev, res_shg.nfev, res_dan.nfev, res_lsq.nfev, res_min.nfev])
     successes = np.array([res_div.success, res_shg.success, res_dan.success, res_lsq.success, res_min.success])
     Ks = np.array([valKdiv, valKshg, valKdan, valKlsq, valKmin])
     Hs = np.array([valHdiv, valHshg, valHdan, valHlsq, valHmin])    
@@ -231,15 +248,17 @@ def fitting(a,w,e,index, cut_off,file):
     d1 = {'Method': ['Differential Evolution', 'SHGO', 'Dual Annealing', 'Least Squares', 'Minimize'],
          'Time': times, 
          'Function Value': func_vals,
-         'No. Evaluations': n_evals,
+         'No. Iterations': n_its,
+         'No. Function Evaluations': n_fevs, 
          'Status': successes,
          'K': Ks,
          'H': Hs}
     
     df = pandas.DataFrame(d1).set_index('Method')
-
+    # print(df)
     r = np.random.random()
-    if r>0.3:
+    # print('r', r)
+    if r>0.999:
         fit_writer(a, res_div.x, index, 'div',w,e, 1,cut_off,file)
         fit_writer(a, res_lsq.x, index, 'lsq',w,e, 1,cut_off,file)
         fit_writer(a, res_min.x, index, 'min',w,e, 1,cut_off,file)
@@ -317,7 +336,6 @@ def argument_reader():
 
     args = parser.parse_args()
 
-    print(args)
     beads = np.array(args.bead)
     radius = np.array(args.radius)
     
@@ -350,8 +368,7 @@ if __name__ == '__main__':
         csize = int(k)
     # print(csize)
     
-    with get_context("spawn").Pool(processes = 14) as pool:
-        print('here', csize)
+    with get_context("spawn").Pool(processes = 2) as pool:
         pool.starmap(func, paramlist, chunksize = csize)
 
         
