@@ -196,7 +196,7 @@ def fitting(a,w,e,index, cut_off,file):
     start = time.perf_counter()
     res_div = differential_evolution(fun, b, args = (x,y,z), maxiter = 500)
     t1 = time.perf_counter()
-    res_shg = shgo(fun, b, args = (x,y,z), maxiter = 500)
+    res_shg = shgo(fun, b, args = (x,y,z), options = {'maxiter': 500})
     t2 = time.perf_counter()
     res_dan = dual_annealing(fun, b, args = (x,y,z), maxiter = 500)
     t3 = time.perf_counter()
