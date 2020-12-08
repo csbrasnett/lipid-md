@@ -239,7 +239,7 @@ def fitting(a,w,e,index, cut_off,file):
     df = pandas.DataFrame(d1).set_index('Method')
 
     r = np.random.random()
-    if r>0.98:
+    if r>0.3:
         fit_writer(a, res_div.x, index, 'div',w,e, 1,cut_off,file)
         fit_writer(a, res_lsq.x, index, 'lsq',w,e, 1,cut_off,file)
         fit_writer(a, res_min.x, index, 'min',w,e, 1,cut_off,file)
