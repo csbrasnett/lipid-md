@@ -8,15 +8,9 @@ Created on Fri Dec  4 10:47:09 2020
 
 
 import ovito as ov
-import glob
 import numpy as np
-import matplotlib.pyplot as plt
-import os
-from scipy import optimize
 import pickle
-from itertools import product
-from multiprocessing import get_context
-
+import glob
 
 if __name__ == '__main__':    
     
@@ -33,5 +27,9 @@ if __name__ == '__main__':
         dims = np.append(dims, data.cell.matrix[2,2])
         
     
-    print('d = %.3f ± %.3f' %(dims.mean(), dims.std()/np.sqrt(np.shape(dims))))
-        
+    d = {'lp': dims.mean(),
+         'lp error': dims.std()/np.sqrt(np.shape(dims))}
+    
+    
+    pickle.dump(d, open('lamellar lattice parameter.p', 'wb'))
+    
