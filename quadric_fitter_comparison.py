@@ -368,7 +368,7 @@ if __name__ == '__main__':
         csize = int(k)
     # print(csize)
     
-    with get_context("spawn").Pool(processes = 2) as pool:
+    with get_context("spawn").Pool(processes = 14) as pool:
         pool.starmap(func, paramlist, chunksize = csize)
 
         
