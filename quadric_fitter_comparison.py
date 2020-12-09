@@ -255,7 +255,7 @@ def fitting(a,index, cut_off,file):
     # print(df)
     r = np.random.random()
     # print('r', r)
-    if r>0.999:
+    if r>0.95:
         fit_writer(a, res_div.x, index, 'div',cut_off,file)
         fit_writer(a, res_lsq.x, index, 'lsq',cut_off,file)
         fit_writer(a, res_min.x, index, 'min',cut_off,file)
