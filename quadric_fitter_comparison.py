@@ -259,7 +259,7 @@ def fitting(a,index, cut_off,file):
         # fit_writer(a, res_div.x, index, 'div',cut_off,file)
         # fit_writer(a, res_lsq.x, index, 'lsq',cut_off,file)
         # fit_writer(a, res_min.x, index, 'min',cut_off,file)
-        pickle.dump(df, open(str(index)+'.p', 'wb'))
+        pickle.dump(df, open(os.path.abspath(file).split('.pdb')[0]+'_cutoff_'+str(co)+str(index)+'.p', 'wb'))
         
     return df
 
