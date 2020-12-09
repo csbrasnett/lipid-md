@@ -256,10 +256,11 @@ def fitting(a,index, cut_off,file):
     r = np.random.random()
     # print('r', r)
     if r>0.95:
-        fit_writer(a, res_div.x, index, 'div',cut_off,file)
-        fit_writer(a, res_lsq.x, index, 'lsq',cut_off,file)
-        fit_writer(a, res_min.x, index, 'min',cut_off,file)
-
+        # fit_writer(a, res_div.x, index, 'div',cut_off,file)
+        # fit_writer(a, res_lsq.x, index, 'lsq',cut_off,file)
+        # fit_writer(a, res_min.x, index, 'min',cut_off,file)
+        pickle.dump(df, open(str(index)+'.p', 'wb'))
+        
     return df
 
 def file_reader(file, bead, wrap = False):
