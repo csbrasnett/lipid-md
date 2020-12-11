@@ -11,8 +11,9 @@ import numpy as np
 import glob
 from scipy.optimize import leastsq
 import pickle
+from mdma import atom
 
-def get_coords(f):
+def get_coords(f, c):
     
     pipeline = ov.io.import_file(f)
     d = pipeline.compute()
@@ -20,8 +21,8 @@ def get_coords(f):
     
     p1 = ov.pipeline.Pipeline(source = ov.pipeline.StaticSource(data = d))
     
-    p1.modifiers.append(ov.modifiers.SelectTypeModifier(types = {'W'}))
-    p1.modifiers.append(ov.modifiers.ClusterAnalysisModifier(cutoff = 8.6, only_selected = True, sort_by_size = True))
+    p1.modifiers.append(ov.modifiers.SelectTypeModifier(types = {'W', 'NH3', 'PO4', 'GL1', 'GL2', 'C1A', 'C1B'}))
+    p1.modifiers.append(ov.modifiers.ClusterAnalysisModifier(cutoff = c, only_selected = True, sort_by_size = True))
     
     data = p1.compute()
     clusters = data.particle_properties.cluster[...]
@@ -29,7 +30,7 @@ def get_coords(f):
 
     cylinders = {}
     
-    for i in range(1,8):
+    for i in range(1,6):
         cluster_positions = np.where(clusters == i)[0]
         d = np.array(positions[cluster_positions])
 
@@ -46,30 +47,44 @@ def get_solid_vol(file):
     pipeline.modifiers.append(ov.modifiers.SelectTypeModifier(property = 'Particle Type',
                                                               types = {'W'}))
     
-    vol_frac = np.zeros(0)    
+    data = pipeline.compute()
 
-    mod1 = ov.modifiers.ConstructSurfaceModifier(only_selected = True, 
-                                                  radius = 1, 
-                                                  smoothing_level = 8, 
-                                                  identify_regions = True)
+    cell_volume = data.cell.volume
+    n_molecules = np.where(data.particles.selection[...]==1)[0].shape[0]
 
+    calc_frac = (n_molecules*118)/cell_volume
 
-    pipeline.modifiers.append(mod1)
-
-    loops = np.linspace(9,12,5)
-
-    for i in loops:
-        mod1.radius = np.round(i, decimals = 1)
-        
-        data = pipeline.compute()
-                
-        solid_volume = data.attributes['ConstructSurfaceMesh.filled_volume']
-        cell_volume = data.attributes['ConstructSurfaceMesh.cell_volume']
-        
-        fraction = solid_volume/cell_volume
-        vol_frac = np.append(vol_frac, fraction)
     
-    return vol_frac
+    
+    # mod1 = ov.modifiers.ConstructSurfaceModifier(only_selected = True, 
+    #                                               radius = 1, 
+    #                                               smoothing_level = 8, 
+    #                                               identify_regions = True)
+
+
+    # pipeline.modifiers.append(mod1)
+
+    # loops = np.linspace(7,10,5)
+    # vol_frac = np.zeros(0)    
+    # calc_frac = np.zeros(0)
+
+    # for i in loops:
+    #     mod1.radius = np.round(i, decimals = 1)
+        
+    #     data = pipeline.compute()
+                
+    #     solid_volume = data.attributes['ConstructSurfaceMesh.filled_volume']
+    #     cell_volume = data.cell.volume
+        
+    #     n_molecules = np.where(data.particles.selection[...]==1)[0].shape[0]
+        
+    #     calc_frac = (n_molecules*118)/cell_volume
+        
+    #     fraction = solid_volume/cell_volume
+    #     vol_frac = np.append(vol_frac, fraction)
+    #     calc_frac = np.append(calc_frac, calc_frac)
+    
+    return calc_frac
 
     
 
@@ -112,7 +127,7 @@ def cylinderFitting(xyz):
 
 if __name__=="__main__":
 
-    
+   
     
     '''
     NB: must be using water for both the cylinder fitting and the surface mesh
@@ -125,51 +140,74 @@ if __name__=="__main__":
     
     files = glob.glob('*.pdb')
     
-    all_radii = np.zeros(0)
-    all_radii_std = np.zeros(0)
-    vol_fracs = np.zeros(0)
     
-    for i in files:
-        print(i)
-        xyzs = get_coords(i)
+    cutoffs = np.linspace(5, 6, 10)
+    
+    results_r = np.zeros(0)
+    results_a = np.zeros(0)
+
+    for k in cutoffs:
         
-        vol_fracs = np.append(vol_fracs, get_solid_vol(i))
-        
-        radii = np.zeros(0)
-        print(vol_fracs)
-        for j in xyzs.keys():
-            xyz = xyzs[j]
+        all_radii = np.zeros(0)
+        all_radii_std = np.zeros(0)
+        vol_fracs = np.zeros(0)
+    
+        for i in files:
+            # print(i)
+            xyzs = get_coords(i, k)
             
-            est_p, success = cylinderFitting(xyz)
+            vol_fracs = np.append(vol_fracs, get_solid_vol(i))
             
-            if len(est_p) == 5:
-                # print(est_p[4])
-                radii = np.append(radii, est_p[4])
+            radii = np.zeros(0)
+            # print(vol_fracs)
+            for j in xyzs.keys():
+                xyz = xyzs[j]
+    
+                est_p, success = cylinderFitting(xyz)
                 
-        print(radii)
-        # print(radii.mean(), radii.std())
-        all_radii = np.append(all_radii, radii.mean())
-        all_radii_std = np.append(all_radii_std, radii.std())
-    
-    all_radii = all_radii[~np.isnan(all_radii)]
-    all_radii_std = all_radii_std[~np.isnan(all_radii_std)]
-
-    
-    d_w = 2*all_radii.mean()
-    d_w_err = all_radii_std.mean()/np.sqrt(len(all_radii_std))
+                if len(est_p) == 5:
+                    # print(est_p[4])
+                    radii = np.append(radii, est_p[4])
+                    
+            # print(radii)
+            # print(radii.mean(), radii.std())
+            all_radii = np.append(all_radii, radii.mean())
+            all_radii_std = np.append(all_radii_std, radii.std())
         
-    a = np.sqrt((1/vol_fracs.mean())*(np.pi/(2*np.sqrt(3)))*(d_w**2))
+        all_radii = all_radii[~np.isnan(all_radii)]
+        all_radii_std = all_radii_std[~np.isnan(all_radii_std)]
+        # print(all_radii)
+    
+        print(k, all_radii.mean(),all_radii_std.mean()/np.sqrt(len(all_radii_std)))
+        
+        # print(all_radii.mean(), 2*all_radii.mean(), vol_fracs.mean())
+        
+        # print(all_radii.mean())
+        
+        # d_w = 2*all_radii.mean()
+        # d_w_err = all_radii_std.mean()/np.sqrt(len(all_radii_std))
+            
+        # a = np.sqrt((1/vol_fracs.mean())*(np.pi/(2*np.sqrt(3)))*(d_w**2))
+        
+        # results_a = np.append(results_a, a)
+        results_r = np.append(results_r, all_radii.mean())
 
-    a_err = np.sqrt((((a/(2*vol_fracs.mean()))**2)*((vol_fracs.std()/np.sqrt(len(vol_fracs)))**2) +
-             (((a/d_w)**2)*(d_w_err**2))))
+        # print(k, a, d_w/2)
+        
+    # print('a = %.3f ± %.3f' %(results_a.mean(), results_a.std()/np.sqrt(len(results_a))))
+    print('r = %.3f ± %.3f' %(results_r.mean(), results_r.std()/np.sqrt(len(results_r))))
     
-    d = {'radius': all_radii.mean(),
-         'radius error':  all_radii_std.mean()/np.sqrt(len(all_radii_std)),
-         'a': a,
-         'a error': a_err             
-         }
     
-    pickle.dump(d, open('cylinder_results.p', 'wb'))
+    # a_err = np.sqrt((((a/(2*vol_fracs.mean()))**2)*((vol_fracs.std()/np.sqrt(len(vol_fracs)))**2) +
+    #           (((a/d_w)**2)*(d_w_err**2))))
+    
+    # d = {'radius': all_radii.mean(),
+    #       'radius error':  all_radii_std.mean()/np.sqrt(len(all_radii_std)),
+    #       'a': a,
+    #       'a error': a_err             
+    #       }
+    
+    # pickle.dump(d, open('cylinder_results.p', 'wb'))
     
     
     

@@ -118,6 +118,7 @@ def get_surrounding_coords(tree, C5Acoords, index, cut_off_radius):
 
 
 def fit_writer(initial_points, fit_result, index, q,co,file):
+    print(q, co, file, fit_result)
     
     #set up the mgrid in teh right spatial position
     d1 = initial_points[0:,0].mean()
@@ -253,17 +254,18 @@ def fitting(a,index, cut_off,file):
     
     df = pandas.DataFrame(d1).set_index('Method')
     # print(df)
-    r = np.random.random()
+    # r = np.random.random()
     # print('r', r)
-    if r>0.95:
+    # if r>0.5:
         # fit_writer(a, res_div.x, index, 'div',cut_off,file)
         # fit_writer(a, res_lsq.x, index, 'lsq',cut_off,file)
         # fit_writer(a, res_min.x, index, 'min',cut_off,file)
-        pickle.dump(df, open(os.path.abspath(file).split('.pdb')[0]+'_cutoff_'+str(cut_off)+str(index)+'.p', 'wb'))
+        # pickle.dump(df, open(os.path.abspath(file).split('.pdb')[0]+'_cutoff_'+str(cut_off)+'_'+str(index)+'.p', 'wb'))
         
     return df
 
 def file_reader(file, bead, wrap = False):
+
     pipeline = ov.io.import_file(file)
     
     if wrap == True:
@@ -313,7 +315,7 @@ def func(file, cut_off, bead):
             if type(pca_res) == tuple:
                 
                 a = pca_res[0]
-                
+
                 df = fitting(a, index, cut_off, file)
             
                 data_out[index] = df
@@ -366,7 +368,7 @@ if __name__ == '__main__':
         csize = int(k)
     # print(csize)
     
-    with get_context("spawn").Pool(processes = 14) as pool:
+    with get_context("spawn").Pool(processes = 2) as pool:
         pool.starmap(func, paramlist, chunksize = csize)
 
         

@@ -65,9 +65,11 @@ def main(file):
 
             #get the c5a id
             c5a_id = tprop.type_by_name('C5A').id
+            c2_id = tprop.type_by_name('C2').id
+            
             
             #count the number of terminal carbons
-            n_lip = np.count_nonzero(tprop == c5a_id)
+            n_lip = np.count_nonzero(tprop == c5a_id) + np.count_nonzero(tprop == c2_id) 
             
             phi_l = 1-fraction
             
