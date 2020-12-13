@@ -21,9 +21,9 @@ def func(x, phi_l):
     
 def main(file):
     
-    hgs = np.zeros(0)
-    time = np.zeros(0)
-    vols = np.zeros(0)
+    # hgs = np.zeros(0)
+    # time = np.zeros(0)
+    # vols = np.zeros(0)
 
     try:
         
@@ -121,15 +121,20 @@ def main(file):
         
         
         
+        d = {'Solid Volume': solid_vols,
+             'Cell Volume': cell_vols,
+             'Surface Area per Lipid': sa,
+             'Calculated Area per Lipid': calc_area}
+        
         
         dname = file.split('.pdb')[0] + '_headgroup_analysis.p'
-        pickle.dump((v,sa,calc_area), open(dname, 'wb'))
+        pickle.dump(d, open(dname, 'wb'))
         
-        t = file.split('md')[1].split('-')[0]
+        # t = file.split('md')[1].split('-')[0]
 
-        hgs = np.append(hgs, sa.mean())
-        vols = np.append(vols, v.mean())
-        time = np.append(time, int(t))
+        # hgs = np.append(hgs, sa.mean())
+        # vols = np.append(vols, v.mean())
+        # time = np.append(time, int(t))
         
     except RuntimeError:
         print('error!', file)
