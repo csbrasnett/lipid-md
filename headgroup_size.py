@@ -124,7 +124,8 @@ def main(file):
         d = {'Solid Volume': solid_vols,
              'Cell Volume': cell_vols,
              'Surface Area per Lipid': sa,
-             'Calculated Area per Lipid': calc_area}
+             'Calculated Area per Lipid': calc_area,
+             'Number of Lipids': n_lip}
         
         
         dname = file.split('.pdb')[0] + '_headgroup_analysis.p'
