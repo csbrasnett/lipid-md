@@ -452,21 +452,20 @@ def main(file, ntrials=10, fit_atom = 'C5A'):
             #write files out into a lammps format
             with open(name,'w') as f:
                 atom.write(to_zero,np.array([[0,surface_points[0:,0].max()],
-                                    [0,surface_points[0:,1].max()],
-                                    [0,surface_points[0:,2].max()]]),f,return_names)
+                                             [0,surface_points[0:,1].max()],
+                                             [0,surface_points[0:,2].max()]]),f,return_names)
                     
                 
             return_dict = {'final coefficients': final_C_i,
                            'objective function value': final_result.fun,
                            'lattice parameter': final_matrix_coeffs[6],
                            'mesophase': optimised_result[4],
-                           'curvatures': curvatures,
-                           'pdb_data': pdb_data,
-                           'points to zero': to_zero,
+                           'all points': to_zero,
+                           'data points': corrected_data_points,
+                           'surface points': sp_final,
+                           'curvatures': curvatures[point_inds],
                            'point names': return_names,
-                           'corrected surface points': corrected_surface_points,
-                           'max_point': surface_points.max(),
-                           'surface normals': normals}
+                           'surface normals': normals[point_inds]}
             
             
             #return the fitting coefficients, the fit value, the final matrix coefficients, and the mesophase
