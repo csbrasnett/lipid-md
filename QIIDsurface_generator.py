@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 
@@ -9,7 +10,7 @@ import numpy as np
 from skimage import measure
 from mdma import atom
 import matplotlib.pyplot as plt
-from curvature import main as curvature
+from QIIDcurvature import main as curvature
 
 def trig_choose(a,var):
     if a == 's':
@@ -160,34 +161,36 @@ def generator(a_1,a_2,a_3,l,curvature_calculations = False):
     else:
         return correct_positions
     
+
+
+if __name__=='__main__':
+    points, curvatures = generator(40,40,40,20, curvature_calculations = True)
     
-points, curvatures = generator(40,40,40,20, curvature_calculations = True)
-
-
-curvature_bins = np.linspace(curvatures.min(), 0, 30)
-mids_curvature_bins = (curvature_bins[:-1]+curvature_bins[1:])/2
-
-inds = np.digitize(curvatures, curvature_bins)
-
-point_inds = np.zeros(0, dtype = int)
-opstr = []
-for i in range(1, inds.max()+1):
-    find = np.where(inds == i)[0].astype(int)
-    point_inds = np.append(point_inds, find)
-    opstr+= [str(i)]*len(find)
-
-points_out = points[point_inds]
-        
-with open('temp1.atom', 'w') as f:
-    atom.write(points_out, np.array([[points_out[0:,0].min(), points_out[0:,0].max()],
-                                     [points_out[0:,1].min(), points_out[0:,1].max()],
-                                     [points_out[0:,2].min(), points_out[0:,2].max()]]), f, opstr)
-
-
-
-
-
-
+    
+    curvature_bins = np.linspace(curvatures.min(), 0, 30)
+    mids_curvature_bins = (curvature_bins[:-1]+curvature_bins[1:])/2
+    
+    inds = np.digitize(curvatures, curvature_bins)
+    
+    point_inds = np.zeros(0, dtype = int)
+    opstr = []
+    for i in range(1, inds.max()+1):
+        find = np.where(inds == i)[0].astype(int)
+        point_inds = np.append(point_inds, find)
+        opstr+= [str(i)]*len(find)
+    
+    points_out = points[point_inds]
+            
+    with open('temp1.atom', 'w') as f:
+        atom.write(points_out, np.array([[points_out[0:,0].min(), points_out[0:,0].max()],
+                                         [points_out[0:,1].min(), points_out[0:,1].max()],
+                                         [points_out[0:,2].min(), points_out[0:,2].max()]]), f, opstr)
+    
+    
+    
+    
+    
+    
 
 
 
