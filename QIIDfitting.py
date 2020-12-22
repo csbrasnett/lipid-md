@@ -10,12 +10,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 from mdma import atom
-#from .pdb_parsing import reader
 from skimage import measure
 from QIIDcurvature import main as curvature
 import ovito as ov
 import pickle
 import glob
+from itertools import product
+from multiprocessing import get_context
 
 '''these initial functions are all associated with fitting minimal surface nodal approximations'''
 def trig_choose(a,var):
@@ -251,7 +252,7 @@ def point_generator(x_mean,y_mean,z_mean,l,lamb):
     surf_eq = term1+term2+term3-term4-term5-term6+term7
     
     #find vertices on the surface
-    print('generating surface vertices')
+    # print('generating surface vertices')
     vertices, simplices,normals, values = measure.marching_cubes_lewiner(surf_eq, level=0)
 
     #sort out the vertices and append them to the list of coordinates to write to file
@@ -285,6 +286,9 @@ def file_reader(file, fit_atoms):
     return lp, pos, all_pos, names
 
 def main(file, ntrials=10, fit_atom = 'C5A'):
+    
+    print('starting', file)
+    
     #read the file using the pdb_parsing file reader
     pdb_data = file_reader(file, fit_atom)
     
@@ -300,7 +304,7 @@ def main(file, ntrials=10, fit_atom = 'C5A'):
     # print('starting randomised fit testing')
     
     for i in range (0,ntrials):
-        if i%(int(ntrials/10)) == 0:
+        # if i%(int(ntrials/10)) == 0:
             # print("\tfile: %s trial: %d/%d" %(file.split('/')[-1], i+1,ntrials))
         #print("trial: %d/%d" %(i+1,ntrials))
         #generate some random numbers between -pi and pi as initial guesses for the angle transformations
@@ -468,6 +472,10 @@ def main(file, ntrials=10, fit_atom = 'C5A'):
                            'surface normals': normals[point_inds]}
             
             
+            pickle.dump(return_dict, open(file.split('.pdb')[0]+'.p', 'wb'))
+            
+            print('finished', file)
+            
             #return the fitting coefficients, the fit value, the final matrix coefficients, and the mesophase
             #the matrix coefficients are ordered as x,y,z,3 rotations, lattice parameter.
             return return_dict
@@ -485,9 +493,16 @@ if __name__ == '__main__':
     
     files = glob.glob('*.pdb')
     
-    for i in range(len(files)):
-        data = main(files[i])
-        pickle.dump(data, open(files[i].split('.pdb')[0]+'.p', 'wb'))
+    k = len(files)/14
+    
+    if k < 1:
+        csize = 1
+    else:
+        csize = int(k)
+    
+    with get_context("spawn").Pool(processes = 2) as pool:
+        pool.map(main, files, chunksize = csize)
+    
     
     
     
