@@ -285,7 +285,7 @@ def file_reader(file, fit_atoms):
     
     return lp, pos, all_pos, names
 
-def main(file, ntrials=10, fit_atom = 'C5A'):
+def main(file, ntrials=40, fit_atom = 'C5A'):
     
     print('starting', file)
     
