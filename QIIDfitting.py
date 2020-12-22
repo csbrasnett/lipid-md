@@ -500,7 +500,7 @@ if __name__ == '__main__':
     else:
         csize = int(k)
     
-    with get_context("spawn").Pool(processes = 2) as pool:
+    with get_context("spawn").Pool(processes = 14) as pool:
         pool.map(main, files, chunksize = csize)
     
     
