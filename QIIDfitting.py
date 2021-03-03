@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 from mdma import atom
 from skimage import measure
-from QIIDcurvature import main as curvature
+from .QIIDcurvature import main as curvature
 import ovito as ov
 import pickle
 import glob
