@@ -7,7 +7,7 @@ author: Chris Brasnett, University of Bristol, christopher.brasnett@bristol.ac.u
 """
 
 import numpy as np
-from .QIIDderivative import derivative
+from QIIDderivative import derivative
 
 def nominator(F_x, F_y, F_z, F_xx, F_xy, F_yy, F_yz, F_zz, F_xz):
     m = np.array([[F_xx, F_xy, F_xz, F_x],
